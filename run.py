@@ -1,5 +1,4 @@
 import argparse
-import ctypes
 import sys
 import time
 
@@ -9,24 +8,7 @@ from elrs_sim.link import SerialLink, describe_ports, find_ch340_port
 from elrs_sim.mapping import ChannelMapper
 from elrs_sim.monitor import ConsoleMonitor
 from elrs_sim.pad import VirtualPad
-
-
-class TimerResolution:
-    def __init__(self) -> None:
-        self._winmm = None
-
-    def __enter__(self) -> "TimerResolution":
-        if sys.platform == "win32":
-            try:
-                self._winmm = ctypes.WinDLL("winmm")
-                self._winmm.timeBeginPeriod(1)
-            except Exception:
-                self._winmm = None
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        if self._winmm is not None:
-            self._winmm.timeEndPeriod(1)
+from elrs_sim.timing import TimerResolution
 
 
 def parse_args(argv=None) -> argparse.Namespace:

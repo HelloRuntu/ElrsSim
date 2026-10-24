@@ -2,7 +2,7 @@
 
 将 ExpressLRS（ELRS）接收机的 CRSF 串口数据转换为 Xbox 360 虚拟手柄，用于 FPV 穿越机模拟器。
 
-提供 Windows 托盘 GUI 和命令行两种运行方式。当前版本：**0.1.0**。
+提供 Windows 托盘 GUI 和命令行两种运行方式。当前版本：**0.1.1**。
 
 ## 主界面
 
@@ -32,7 +32,7 @@
 
 ## 下载与运行
 
-1. 从 [Releases](https://github.com/HelloRuntu/ElrsSim/releases) 下载 `ElrsSim-v0.1.0.exe`。
+1. 从 [Releases](https://github.com/HelloRuntu/ElrsSim/releases) 下载 `ElrsSim-v0.1.1.exe`。
 2. 安装 ViGEmBus 并重启（如安装程序要求）。
 3. 将 exe 放到任意目录并双击运行。
 4. 首次启动会在 exe 同目录生成 `config.json`。
@@ -120,7 +120,7 @@ python run.py --calibrate 10
 
 - `serial.port`：`auto` 或 `COM6`
 - `serial.baud`：默认 `420000`
-- `update_hz`：虚拟手柄更新频率，默认 `500`
+- `update_hz`：虚拟手柄更新频率上限，默认 `500`；实际随 CRSF 帧到达即时更新
 - `failsafe_timeout_ms`：失联判定时间，默认 `250`
 - `failsafe_throttle`：失联油门值，默认 `-1.0`
 - `axes.<name>.invert`：反向
@@ -155,6 +155,13 @@ python -m unittest discover -s tests -v
 
 遇到串口、手柄或对频问题时，可先查看该日志。
 
+## 性能建议
+
+- 程序按 CRSF 帧到达即时更新虚拟手柄，`update_hz` 只作为更新频率上限。
+- 如果 CH340 驱动提供 Latency Timer 选项，将其设为 `1 ms` 可进一步降低串口延迟（设备管理器 → 端口 → USB-SERIAL CH340 → 属性 → 高级）。
+- 关闭不使用的串口监视器、手柄映射工具或录制软件，避免额外占用串口和输入设备。
+- GUI 以 20 Hz 刷新显示，不影响虚拟手柄的实际输出频率。
+
 ## 常见问题
 
 - **找不到 CH340**：确认驱动已安装、换 USB 口，并用 `python run.py --list` 检查。
@@ -165,10 +172,10 @@ python -m unittest discover -s tests -v
 
 ## 校验
 
-`v0.1.0` 发布文件：
+`v0.1.1` 发布文件：
 
 ```text
-SHA256  5BD866E011C0494FB46B790DAB51B5713F6470D86B4AC9B0C795D0EA176D2FFC  ElrsSim-v0.1.0.exe
+SHA256  8C434D933C20AA15CA17667F4644331A8547AD0E05E0A993A7E8A5FC46FCF56A  ElrsSim-v0.1.1.exe
 ```
 
 ## 说明

@@ -78,6 +78,9 @@ class SerialLink(threading.Thread):
         self._parser = CrsfParser()
         self._handle = None
         self._write_lock = threading.Lock()
+        self._frame_event = threading.Event()
+        self._event_interval = 1.0 / max(1.0, config.update_hz)
+        self._last_event_time = 0.0
 
     def run(self) -> None:
         while not self._stop_event.is_set():
@@ -137,6 +140,9 @@ class SerialLink(threading.Thread):
             self._last_frame_time = now
             self._frames += 1
             self._rate_times.append(now)
+        if now - self._last_event_time >= self._event_interval:
+            self._last_event_time = now
+            self._frame_event.set()
 
     def send(self, data: bytes) -> bool:
         with self._lock:
@@ -155,6 +161,12 @@ class SerialLink(threading.Thread):
 
     def bind(self) -> bool:
         return self.send(build_bind_frame())
+
+    def wait_for_frame(self, timeout: Optional[float] = None) -> bool:
+        signaled = self._frame_event.wait(timeout)
+        if signaled:
+            self._frame_event.clear()
+        return signaled
 
     def snapshot(self) -> LinkSnapshot:
         now = time.monotonic()
@@ -179,3 +191,4 @@ class SerialLink(threading.Thread):
 
     def stop(self) -> None:
         self._stop_event.set()
+        self._frame_event.set()

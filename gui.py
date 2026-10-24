@@ -18,6 +18,7 @@ from elrs_sim.branding import make_image
 from elrs_sim.config import Calibration, Config
 from elrs_sim.engine import Engine
 from elrs_sim.link import find_ch340_port
+from elrs_sim.timing import TimerResolution
 
 APP_NAME = "ElrsSim"
 BG = "#0f1420"
@@ -162,9 +163,17 @@ class App:
         self.icon = None
         self._commands = queue.Queue()
         self._closing = False
+        self._hidden = False
         self._hidden_notified = False
         self._last_link_error = None
         self._last_pad_error = None
+        self._last_axis_text = None
+        self._last_stick_key = None
+        self._last_channels = [None] * 16
+        self._last_state_text = None
+        self._last_failsafe_text = None
+        self._last_link_text = None
+        self._tick_count = 0
 
         self._build_ui()
         self._build_tray()
@@ -534,6 +543,7 @@ class App:
         if self._closing:
             return
         self.root.withdraw()
+        self._hidden = True
         if not self._hidden_notified and self.icon is not None:
             self._hidden_notified = True
             try:
@@ -544,6 +554,14 @@ class App:
     def _show_window(self) -> None:
         self.root.deiconify()
         self.root.lift()
+        self._hidden = False
+        self._last_axis_text = None
+        self._last_stick_key = None
+        self._last_channels = [None] * 16
+        self._last_state_text = None
+        self._last_failsafe_text = None
+        self._last_link_text = None
+        self._tick_count = 0
         try:
             self.root.focus_force()
         except Exception:
@@ -586,36 +604,63 @@ class App:
     def _tick(self) -> None:
         if self._closing:
             return
+        if self._hidden and self.calibration is None:
+            self.root.after(50, self._tick)
+            return
 
         status = self.engine.status()
         snapshot = status.snapshot
         state = status.state
         running = status.running
 
-        self.state_label.configure(
-            text="运行中" if running else "已停止",
-            fg=OK_COLOR if running else MUTED,
-        )
-        self.start_button.configure(text="停止" if running else "启动")
-        self.failsafe_label.configure(text="FAILSAFE" if running and status.failsafe else "")
-
-        age_ms = snapshot.age_ms()
-        details = f"{(snapshot.port or '--'):>6}  {snapshot.rate_hz:4.0f} Hz  frame {snapshot.frames}  crc {snapshot.crc_errors}"
-        if age_ms is not None:
-            details += f"  age {age_ms:4.0f} ms"
-        self.link_label.configure(text=details)
-
-        self.axis_label.configure(
-            text=(
-                f"R {state.right_x:+.2f}   P {state.right_y:+.2f}   "
-                f"T {state.left_y:+.2f}   Y {state.left_x:+.2f}"
+        state_text = "运行中" if running else "已停止"
+        if state_text != self._last_state_text:
+            self._last_state_text = state_text
+            self.state_label.configure(
+                text=state_text,
+                fg=OK_COLOR if running else MUTED,
             )
-        )
-        self._set_stick(self.left_canvas, self.left_dot, state.left_x, state.left_y)
-        self._set_stick(self.right_canvas, self.right_dot, state.right_x, state.right_y)
+            self.start_button.configure(text="停止" if running else "启动")
 
-        if snapshot.channels:
+        failsafe_text = "FAILSAFE" if running and status.failsafe else ""
+        if failsafe_text != self._last_failsafe_text:
+            self._last_failsafe_text = failsafe_text
+            self.failsafe_label.configure(text=failsafe_text)
+
+        self._tick_count += 1
+        if self._tick_count % 4 == 0:
+            age_ms = snapshot.age_ms()
+            details = f"{(snapshot.port or '--'):>6}  {snapshot.rate_hz:4.0f} Hz  frame {snapshot.frames}  crc {snapshot.crc_errors}"
+            if age_ms is not None:
+                details += f"  age {age_ms:4.0f} ms"
+            if details != self._last_link_text:
+                self._last_link_text = details
+                self.link_label.configure(text=details)
+
+        axis_text = (
+            f"R {state.right_x:+.2f}   P {state.right_y:+.2f}   "
+            f"T {state.left_y:+.2f}   Y {state.left_x:+.2f}"
+        )
+        if axis_text != self._last_axis_text:
+            self._last_axis_text = axis_text
+            self.axis_label.configure(text=axis_text)
+
+        stick_key = (
+            round(state.left_x, 3),
+            round(state.left_y, 3),
+            round(state.right_x, 3),
+            round(state.right_y, 3),
+        )
+        if stick_key != self._last_stick_key:
+            self._last_stick_key = stick_key
+            self._set_stick(self.left_canvas, self.left_dot, state.left_x, state.left_y)
+            self._set_stick(self.right_canvas, self.right_dot, state.right_x, state.right_y)
+
+        if snapshot.channels and self._tick_count % 2 == 0:
             for index, value in enumerate(snapshot.channels[:16]):
+                if value == self._last_channels[index]:
+                    continue
+                self._last_channels[index] = value
                 clamped = max(0, min(2047, value))
                 self.channel_bars[index]["value"] = clamped / 2047.0 * 100.0
                 self.channel_values[index].configure(text=f"{value:4d}")
@@ -723,13 +768,14 @@ def main(argv=None) -> int:
     root = tk.Tk()
     engine = Engine(config)
     App(root, config_path, config, engine, auto_start=not args.no_autostart)
-    try:
-        root.mainloop()
-    finally:
+    with TimerResolution():
         try:
-            engine.stop()
-        except Exception:
-            logging.exception("shutdown engine stop failed")
+            root.mainloop()
+        finally:
+            try:
+                engine.stop()
+            except Exception:
+                logging.exception("shutdown engine stop failed")
     return 0
 
 

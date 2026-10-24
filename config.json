@@ -1,0 +1,145 @@
+{
+  "serial": {
+    "port": "auto",
+    "baud": 420000,
+    "reconnect_delay_s": 1.0
+  },
+  "update_hz": 500.0,
+  "failsafe_timeout_ms": 250.0,
+  "failsafe_throttle": -1.0,
+  "button_low": 0.25,
+  "button_high": 0.75,
+  "axes": {
+    "roll": {
+      "channel": 1,
+      "invert": false,
+      "centered": true,
+      "deadband": 0.03,
+      "expo": 0.0,
+      "map_0_1": false
+    },
+    "pitch": {
+      "channel": 2,
+      "invert": false,
+      "centered": true,
+      "deadband": 0.03,
+      "expo": 0.0,
+      "map_0_1": false
+    },
+    "throttle": {
+      "channel": 3,
+      "invert": false,
+      "centered": false,
+      "deadband": 0.0,
+      "expo": 0.0,
+      "map_0_1": false
+    },
+    "yaw": {
+      "channel": 4,
+      "invert": false,
+      "centered": true,
+      "deadband": 0.03,
+      "expo": 0.0,
+      "map_0_1": false
+    }
+  },
+  "calibration": [
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    },
+    {
+      "min": 172,
+      "center": 992,
+      "max": 1811
+    }
+  ],
+  "buttons": [
+    {
+      "channel": 5,
+      "position": "high",
+      "button": "A"
+    },
+    {
+      "channel": 6,
+      "position": "low",
+      "button": "B"
+    },
+    {
+      "channel": 6,
+      "position": "high",
+      "button": "X"
+    }
+  ]
+}
